@@ -1,0 +1,224 @@
+---
+title: "Building *UCSC Track Hubs*"
+author: "Alejandro Reyes"
+package: easyTrackHubs
+output: 
+  BiocStyle::html_document:
+    keep_md: yes
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+abstract: |
+  This package provides a function to reformat
+  lists of genome coverage files, such as *bigWig* of *bam* 
+  files, into the directory structure of a *UCSC* *Track Hub* ready 
+  to be visualized in the genome browser. 
+---
+
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set( message=FALSE )
+```
+
+
+# Input data
+
+The main input structure is a `data.frame` containing this 5 columns:
+
+* `sample_name`: sample label or unique identifier. 
+* `file_path`: path to the genome coverage files.
+* `file_format`: format of the coverage file. Currently supported/tested formats are *bigWig* and *bam* files.
+* `reference_genome`: *UCSC* reference genome identifier (e.g. *mm10*, *hg38*, etc).
+* `data_type`: what kind of experiment is this? (e.g. *RNA-seq*, *ChIP-seq*, etc).
+
+An example of such `data.frame` is given here:
+
+```{r}
+
+library(easyTrackHubs)
+data( test_df )
+
+package_dir <- system.file("extdata", package="easyTrackHubs", mustWork=TRUE)
+bigwig_files <- list.files( package_dir, full.names=TRUE )
+names(bigwig_files) <- gsub(".bigWig", "", basename(bigwig_files))
+
+test_df$file_path <- bigwig_files[test_df$sample_name]
+
+head(test_df)
+
+```
+
+# Building a simple *Track Hub*
+
+This `data.frame` together with additional metadata 
+information, can be then use as input to the function `easyTrackHub()` to build
+a *UCSC* *Track Hub*. If we specify the parameter `copy=FALSE` (the default), 
+the function will create soft links to the coverage files. If `copy=TRUE`, 
+the files will be copied instead.
+
+```{r, message=TRUE}
+easyTrackHub( test_df, trackhub_name="mth1",
+             trackhub_path="mth1", maintainer_email="prueba@novartis.com" )
+```
+
+```{r, echo=FALSE}
+## to avoid extra files in the R package
+unlink("mth1", force=TRUE, recursive=TRUE)
+```
+
+# *Track Hub* with coloured tracks
+
+Sometimes it is useful to specify colors to visualize several tracks. The `easyTrackHub()` 
+function allows users to include an optional column `color` to the input `data.frame`. 
+The values of this column must specify either color names or hexadecimal color codes. If 
+included, each track will be displayed in the *UCSC* browser with the specified color.
+
+```{r, message=TRUE}
+test_df$color <- RColorBrewer::brewer.pal( nrow(test_df)/3, "Dark2" )
+easyTrackHub( test_df, trackhub_name="mth2",
+             trackhub_path="mth2", maintainer_email="prueba@novartis.com" )
+```
+
+```{r echo=FALSE}
+## to avoid extra files in the R package
+unlink("mth2", force=TRUE, recursive=TRUE)
+```
+
+# Adding additional attributes to *Tracks*
+
+If any additional attributes should be added to specific tracks of Track Hub,
+the `easyTrackHub()`  makes it possible in two different ways. The simplest 
+way, is to pass the *UCSC* parameter as an additional parameter to the 
+`easyTrackHub()` call:
+
+```{r, message=TRUE}
+easyTrackHub( test_df, trackhub_name="mth2",
+             trackhub_path="mth2",
+             maintainer_email="prueba@novartis.com",
+             visibility="full" )
+```
+
+```{r echo=FALSE}
+## to avoid extra files in the R package
+unlink("mth2", force=TRUE, recursive=TRUE)
+```
+
+An alternative is to pass these parameters in the input `data.frame` columns. 
+The name should start with `ucscattr_` preffix and should be followed by the name
+of the parameter. This approach is useful to pass different parameter values to 
+different samples. 
+
+```{r, message=TRUE}
+test_df$`ucscattr_visibility` <- ifelse(test_df$`reference_genome` == "mm10", "full", "dense")
+easyTrackHub( test_df, trackhub_name="mth2",
+             trackhub_path="mth2", maintainer_email="prueba@novartis.com" )
+```
+
+```{r echo=FALSE}
+## to avoid extra files in the R package
+unlink("mth2", force=TRUE, recursive=TRUE)
+```
+
+If an attribute should be assigned only for a subset of tracks, create the same 
+kind of a column, but insert `NA` values for those tracks, that does not require 
+the attribute
+
+```{r, message=TRUE}
+test_df[test_df$reference_genome == "mm10", "ucscattr_visibility"] <- "full"
+head(test_df[c("data_type", "ucscattr_visibility")])
+easyTrackHub( test_df, trackhub_name="mth2",
+             trackhub_path="mth2", maintainer_email="prueba@novartis.com" )
+```
+
+```{r echo=FALSE}
+## to avoid extra files in the R package
+unlink("mth2", force=TRUE, recursive=TRUE)
+```
+
+# Composite *Track Hubs* with groups
+
+In *UCSC Track Hubs*, one can organize tracks into main groups. With this, one can set configurations 
+for groups of tracks rather than changing the configuration of each track individually. 
+This is useful, for example, to display different biological replicates in a consistent manner. 
+To indicate sample grouping to the `easyTrackHubs()` function, an additional column named `group` 
+can be included in the input `data.frame`. As an example, the code below adds a grouping variable 
+to the example `data.frame`.
+
+```{r, message=TRUE}
+
+test_df$group <- test_df$target
+
+easyTrackHub( test_df, trackhub_name="mth3",
+             trackhub_path="mth3", maintainer_email="prueba@novartis.com" )
+```
+
+In the *UCSC* browser, the resulting groups of tracks would look like the figure below, instead 
+of showing each track individually.
+
+```{r echo=FALSE, out.width='90%'}
+pngPath <- system.file("screenshots", "example_groups.png", package="easyTrackHubs")
+knitr::include_graphics(pngPath)
+```
+
+```{r echo=FALSE}
+## to avoid extra files in the R package
+unlink("mth3", force=TRUE, recursive=TRUE)
+```
+
+# Composite *Track Hubs* with groups and subgroups
+
+The tracks within one track group can be further organized into subgroups. 
+This can be helpful when you have a large collection of samples, 
+with different subsets of them having something in common. For example, a large 
+group of tracks containing brain samples can be organized into subgroups that 
+indicate the sample's brain region annotation. Adding these additional subgroups 
+can be helpful to (de)select subsets of samples and display them according to 
+their metadata values.
+
+Passing subgroup information to the function `easyTrackhub()` is possible
+by adding more columns to the input `data.frame`. Note that the `group` column 
+needs to be present in the input `data.frame` for further subgrouping variables to be 
+considered by the function. The column names of the subgrouping variables in the 
+input `data.frame` must match the regular expression`subgroup[1-9]_\S+` 
+(i.e. the word 'subgroup' followed by a number from 1 to 9, followed by an underscore, 
+followed by the variable name without spaces or special characters) in order to 
+be considered by the function `easyTrackHub()`.
+
+As an example, the code below adds three subgrouping variables to the input `data.frame`, which
+are arbitrarily named `myvariable1`, `myvariable2` and `myvariable3`:
+
+```{r, message=TRUE}
+
+test_df$subgroup1_cell_type <- test_df$cell_type
+test_df$subgroup2_myvariable2 <-
+    rep(LETTERS[1:2], length.out=nrow(test_df))
+test_df$subgroup3_myvariable3 <-
+    rep(rev(LETTERS[1:5]), length.out=nrow(test_df))
+
+easyTrackHub( test_df, trackhub_name="mth4",
+             trackhub_path="mth4", maintainer_email="prueba@novartis.com" )
+
+
+```
+
+The configuration settings of each track group will contain the subgrouping variables, which 
+one can use to select and de-select samples to show according to the subgroup labels. 
+For example, the configuration settings of the *Track Hub 'mth4'* created by the code above 
+will look like this:
+
+```{r echo=FALSE, out.width='80%'}
+pngPath <- system.file("screenshots", "example_subgroups.png", package="easyTrackHubs")
+knitr::include_graphics(pngPath)
+```
+
+```{r echo=FALSE}
+## to avoid extra files in the R package
+unlink("mth4", force=TRUE, recursive=TRUE)
+```
+
+# Session Information
+
+```{r}
+sessionInfo()
+```

@@ -1,0 +1,37 @@
+Package: easyTrackHubs
+Title: This is a one-funcion package that reformats list of genomic coverage files
+       and writes a UCSC trackhub file
+Version: 0.0.0.9012
+Authors@R: 
+    c(person(given = "Alejandro",
+           family = "Reyes",
+           role = c("aut", "cre"),
+           email = "alejandro.reyes_quiroz@novartis.com",
+           comment = c(ORCID = "0000-0001-8717-6612")),
+      person(given = "Sebastian",
+           family = "Steinhauser",
+           role = c("ctb"),
+           comment = c(ORCID = "0000-0002-5940-3870")))
+Maintainer@R:
+    person(given = "Alejandro",
+           family = "Reyes",
+           role = c("aut", "cre"),
+           email = "alejandro.reyes_quiroz@novartis.com",
+           comment = c(ORCID = "0000-0001-8717-6612"))
+Description: This package provides a function to
+	     generate UCSC trackhubs from genome coverage files. It is
+	     intended to do this in a simple and easy way.
+VignetteBuilder: knitr
+Depends: R (>= 3.5.0), R.utils, methods
+Suggests: 
+    BiocStyle,
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0),
+    RColorBrewer
+License: GPL (>= 3)
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Config/testthat/edition: 3
