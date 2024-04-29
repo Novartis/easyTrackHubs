@@ -6,7 +6,7 @@ Authors@R:
     c(person(given = "Alejandro",
            family = "Reyes",
            role = c("aut", "cre"),
-           email = "alejandro.reyes_quiroz@novartis.com",
+           email = "alejandro.reyes.ds@gmail.com",
            comment = c(ORCID = "0000-0001-8717-6612")),
       person(given = "Sebastian",
            family = "Steinhauser",
@@ -16,7 +16,7 @@ Maintainer@R:
     person(given = "Alejandro",
            family = "Reyes",
            role = c("aut", "cre"),
-           email = "alejandro.reyes_quiroz@novartis.com",
+           email = "alejandro.reyes.ds@gmail.com",
            comment = c(ORCID = "0000-0001-8717-6612"))
 Description: This package provides a function to
 	     generate UCSC trackhubs from genome coverage files. It is
